@@ -94,7 +94,7 @@ public class Snake {
 	
 	public void collisionCheck() {
 		//check the walls
-		if(body.get(0).getX() < 0 || body.get(0).getX() + body.get(0).getWidth() >= Main.FRAME_WIDTH || body.get(0).getY() < 0 || body.get(0).getY() + body.get(0).getHeight() >= Main.FRAME_HEIGHT) {
+		if(body.get(0).getX() < 0 || body.get(0).getX() + body.get(0).getWidth() > Main.FRAME_WIDTH || body.get(0).getY() < 0 || body.get(0).getY() + body.get(0).getHeight() > Main.FRAME_HEIGHT) {
 			Main.gameOver = true;
 		}
 		//checking if the head is in the same spot as anything

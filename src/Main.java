@@ -18,7 +18,7 @@ import javax.swing.JFrame;
 
 public class Main implements KeyListener {
 	
-	public static int FRAME_WIDTH = 1000, FRAME_HEIGHT = 1000, TILE_HEIGHT = 10, TILE_WIDTH = 10;
+	public static int FRAME_WIDTH = 1000, FRAME_HEIGHT = 1000, TILE_HEIGHT = 20, TILE_WIDTH = 20;
 	public static JFrame frame = new JFrame("Snake");
 	public static Canvas canvas = new Canvas();
 	public static BufferStrategy bs;
@@ -26,23 +26,27 @@ public class Main implements KeyListener {
 	public static Tile[][] grid;
 	public static Snake s;
 	public static Apple a;
-	public static boolean gameOver;
+	public static boolean gameOver, replay = false;
 	public static boolean[] keyList = new boolean[256];
-	public static int fps = 30;
+	public static int fps = 30, score;
+	public static Color c1 = new Color(42, 83, 220), c2 = new Color(60, 42, 220);
 	
 	Main(){
 		init();
 		long cur = System.currentTimeMillis(); 
 		long prev = cur;
 		long fpsmilli = 1000/fps;
-		while(!gameOver) {
-			cur = System.currentTimeMillis();
-			if(cur - prev > fpsmilli) {
-				refresh();
-				draw();
-				prev = cur;
+		while(true) {
+			gameInit();
+			while(!gameOver || !replay) {
+				cur = System.currentTimeMillis();
+				if(cur - prev > fpsmilli) {
+					refresh();
+					draw();
+					prev = cur;
+				}
 			}
-			
+
 		}
 		
 	}
@@ -52,7 +56,7 @@ public class Main implements KeyListener {
 	}
 	
 	public void init() {
-		frame.setSize(FRAME_WIDTH, FRAME_HEIGHT + 30);
+		frame.setSize(FRAME_WIDTH+1, FRAME_HEIGHT + 38);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setFocusable(true);
 		frame.setResizable(true);
@@ -63,17 +67,24 @@ public class Main implements KeyListener {
 		frame.addKeyListener(this);
 		frame.setVisible(true);
 		System.out.println(frame.getContentPane().getSize());
-		grid = new Tile[100][100];
+	}
+	
+	public void gameInit() {
+		gameOver = false;
+		replay = false;
+		grid = new Tile[FRAME_WIDTH/TILE_WIDTH][FRAME_HEIGHT/TILE_HEIGHT];
 		for(int i = 0; i < grid.length; i++) {
 			for(int j = 0; j < grid[i].length; j++) {
 				grid[i][j] = new Tile(i*TILE_WIDTH, j*TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT);
 			}
 		}
 		
-		s = new Snake(20, grid[50][50].getX(), grid[50][50].getY(), grid[50][50].getWidth(), grid[50][50].getHeight());
+		s = new Snake(5, grid[grid.length/2][grid.length/2].getX(), grid[grid.length/2][grid.length/2].getY(), grid[grid.length/2][grid.length/2].getWidth(), grid[grid.length/2][grid.length/2].getHeight());
 		gameOver = false;
 		
-		a = new Apple(60 * TILE_WIDTH, 50*TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT);
+		a = new Apple((grid.length/2 + 10) * TILE_WIDTH, (grid.length/2)*TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT);
+		fps = 30;
+		score = 0;
 	}
 	
 	
@@ -83,19 +94,48 @@ public class Main implements KeyListener {
 		bs = canvas.getBufferStrategy();
 		g = bs.getDrawGraphics();
 		//drawing begins here
-		g.setColor(Color.red);
-		g.fillRect(0, 0, FRAME_WIDTH + 40, FRAME_HEIGHT + 40);
 		g.setColor(Color.black);
-		g.fillRect(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
-		
-		s.draw(g);
-		a.draw(g);
-		/*for(int i = 0; i < grid.length; i++) {
-			for(int j = 0; j < grid[i].length; j++) {
-				g.fillRect((int)grid[i][j].getX(), (int)grid[i][j].getY(), (int)(grid[i][j].getWidth()), (int)(grid[i][j].getHeight()));
+		g.fillRect(0, 0, FRAME_WIDTH+10, FRAME_HEIGHT+10);
+		if(gameOver) {
+			g.fillRect(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
+			g.setColor(Color.black);
+			g.setColor(Color.white);
+			g.setFont(new Font("Arial", Font.BOLD, 55));
+			drawStringCenter(g, score+"",470, 475,60,50);
+			//g.drawString(score+"", 350, 470);
+			g.setColor(new Color(76, 192, 235));
+			g.fillRect(400, 600, 215, 30);
+			g.setColor(Color.black);
+			g.setFont(new Font("Arial", Font.BOLD, 13));
+			drawStringCenter(g, "HIT SPACE TO REPLAY!", 400, 600, 215, 30);
+		}
+		else {
+			
+			for(int i = 0; i < grid.length; i++) {
+				for(int j = 0; j< grid[i].length; j++) {
+					if(i%2 == 0) {
+						if(j%2 == 0) {
+							g.setColor(c1);
+						}
+						else {
+							g.setColor(c2);
+						}
+					}
+					else {
+						if(j%2 == 0) {
+							g.setColor(c2);
+						}
+						else {
+							g.setColor(c1);
+						}
+					}
+					g.fillRect(grid[i][j].getX(), grid[i][j].getY(), grid[i][j].getWidth(), grid[i][j].getHeight());
+				}
 			}
-		}*/
-		//drawing ends here
+			s.draw(g);
+			a.draw(g);
+		}
+			//drawing ends here
 		g.dispose();
 		bs.show();
 		Toolkit.getDefaultToolkit().sync();
@@ -103,16 +143,13 @@ public class Main implements KeyListener {
 	
 	
 	public void refresh(){
-		/*
 		if(gameOver) {
 			if(keyList[KeyEvent.VK_SPACE]) {
 				replay = true;
 				keyList[KeyEvent.VK_SPACE] = false;
 			}
 		}
-		
-		gameCheck();
-		*/
+
 		s.move();
 		a.update();
 		if(keyList[KeyEvent.VK_UP]) {
@@ -147,6 +184,20 @@ public class Main implements KeyListener {
 	public void keyReleased(KeyEvent e) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	public void drawStringCenter(Graphics g, String text, int x, int y, int width, int height) {
+	    Font font = g.getFont();
+		// Get the FontMetrics
+	    FontMetrics metrics = g.getFontMetrics(font);
+	    // Determine the X coordinate for the text
+	    int x_coord = x + (width - metrics.stringWidth(text)) / 2;
+	    // Determine the Y coordinate for the text (note we add the ascent, as in java 2d 0 is top of the screen)
+	    int y_coord = y + ((height - metrics.getHeight()) / 2) + metrics.getAscent();
+	    // Set the font
+	    g.setFont(font);
+	    // Draw the String
+	    g.drawString(text, x_coord, y_coord);
 	}
 }
 
